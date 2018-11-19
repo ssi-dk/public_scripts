@@ -92,7 +92,7 @@ def check_cge_db(input_database, out_database, delimiter, expected_num_of_values
                         sys.stdout.write("Done creating output {} with {} errors. Formatting was ensured.\n\n".format(os.path.join(out_database, database), number_of_errors))
     if combined_db is not None:
         with open(os.path.join(out_database, combined_db), "w") as output:
-            sys.stdout.write("Master file {} being created".format(os.path.join(out_database, combined_db)))
+            sys.stdout.write("Master file {} being created\n".format(os.path.join(out_database, combined_db)))
             for entry in master_fasta_db: #  NOTE: python 3.6 dict order is guranteed on insertion order
                 master_fasta_db[entry].write(output)
     return 0
