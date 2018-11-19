@@ -13,7 +13,6 @@ values = the number of expected values the delimiter will split into, assumes al
 import argparse
 import os
 import sys
-import datetime
 import skbio
 
 def parse_args(argv):
