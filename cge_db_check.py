@@ -19,10 +19,10 @@ import skbio
 def parse_args(argv):
     parser = argparse.ArgumentParser(description='Update pub mlst dbs')
     parser.add_argument("-in", "--input_database",
-                        default="/srv/data/DB/cge_dbs/resfinder.fsa",
+                        default="/srv/data/DB/cge_dbs/resfinder",
                         type=str)
     parser.add_argument("-out", "--out_database",
-                        default="/srv/data/DB/cge_dbs/modified/resfinder.fsa",
+                        default="/srv/data/DB/cge_dbs/modified/resfinder",
                         type=str)
     parser.add_argument("-delim", "--delimiter",
                         default="_",
@@ -41,6 +41,12 @@ def check_cge_db(input_database, out_database, delimiter, expected_num_of_values
     sys.stdout.write("Check {} database location\n".format(input_database))
     if delimiter == "":
         delimiter = None
+    if not os.path.isdir(out_database):
+        try:
+            os.makedirs(out_database)
+        except Exception as e:
+            sys.stderr.write("Error making output directory\n")
+            return 1
     for database in sorted(os.listdir(input_database)):
         if database.endswith(file_extension):
             sys.stdout.write("Starting check on {}\n".format(database))
