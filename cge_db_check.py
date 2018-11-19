@@ -32,11 +32,14 @@ def parse_args(argv):
     parser.add_argument("-file_type", "--file_extension",
                         default=".fsa",
                         type=str)
+    parser.add_argument("-combined", "--combined_db",
+                        default=None, #  Set to fasta file for combined db if desired
+                        type=str)
 
     args = parser.parse_args()
     return args
 
-def check_cge_db(input_database, out_database, delimiter, expected_num_of_values, file_extension):
+def check_cge_db(input_database, out_database, delimiter, expected_num_of_values, file_extension, combined_db):
     sys.stdout.write("Check {} database location\n".format(input_database))
     if delimiter == "":
         delimiter = None
@@ -46,6 +49,8 @@ def check_cge_db(input_database, out_database, delimiter, expected_num_of_values
         except Exception as e:
             sys.stderr.write("Error making output directory\n")
             return 1
+    
+    master_fasta_db = {}
     for database in sorted(os.listdir(input_database)):
         if database.endswith(file_extension):
             sys.stdout.write("Starting check on {}\n".format(database))
@@ -69,8 +74,11 @@ def check_cge_db(input_database, out_database, delimiter, expected_num_of_values
                         if seq.metadata['id'] in fasta_db:
                             number_of_errors +=1
                             sys.stderr.write("Duplicate header {} at entry {}\n".format(seq.metadata['id'], entry_number))
+                        if seq.metadata['id'] in master_fasta_db:
+                            sys.stderr.write("WARNING: Duplicate header {} within full DB set at entry {}\n".format(seq.metadata['id'], entry_number))
                         else:
-                            fasta_db[seq.metadata['id']] = skbio.sequence.Sequence(seq.values.tostring().upper(), metadata={'id': seq.metadata['id']}) #  Note: This formats the length and ensures all letters are ALL CAPS                
+                            fasta_db[seq.metadata['id']] = skbio.sequence.Sequence(seq.values.tostring().upper(), metadata={'id': seq.metadata['id']})  #  Note: This formats the length and ensures all letters are ALL CAPS                
+                            master_fasta_db[seq.metadata['id']] = skbio.sequence.Sequence(seq.values.tostring().upper(), metadata={'id': seq.metadata['id']})
                 except Exception as e:
                     sys.stderr.write("Error with file, likely not fasta file. Error {}".format(str(e)))
                 else:
@@ -82,8 +90,12 @@ def check_cge_db(input_database, out_database, delimiter, expected_num_of_values
                         sys.stderr.write("File creation error {}\n".format(str(e)))
                     else:
                         sys.stdout.write("Done creating output {} with {} errors. Formatting was ensured.\n\n".format(os.path.join(out_database, database), number_of_errors))
+    if combined_db is not None:
+        with open(os.path.join(out_database, combined_db), "w") as output:
+            for entry in master_fasta_db: #  NOTE: python 3.6 dict order is guranteed on insertion order
+                master_fasta_db[entry].write(output)
     return 0
 
 if __name__ == "__main__":
     args = parse_args(sys.argv)
-    check_cge_db(args.input_database, args.out_database, args.delimiter, args.expected_num_of_values, args.file_extension)
+    check_cge_db(args.input_database, args.out_database, args.delimiter, args.expected_num_of_values, args.file_extension, args.combined_db)
